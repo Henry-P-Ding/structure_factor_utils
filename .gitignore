@@ -50,6 +50,7 @@ coverage.xml
 .hypothesis/
 .pytest_cache/
 cover/
+tests/test_output
 
 # Translations
 *.mo
@@ -151,6 +152,12 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
+
+# Visual Studio Code
+.vscode
+
+# MacOS .DS_Store
+.DS_Store
 
 # PyCharm
 #  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
