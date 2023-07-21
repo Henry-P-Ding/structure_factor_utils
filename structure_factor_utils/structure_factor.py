@@ -2,8 +2,7 @@
 Utility for calculating scattering structure factors
 
 Structure factor calculations for various scattering methods are implemented in this file. 
-The atomic structures and output files interface with the Atomic Simulation Environment
-(ASE, https://wiki.fysik.dtu.dk/ase/).
+The atomic structures and output files interface with the `Atomic Simulation Environment <https://wiki.fysik.dtu.dk/ase/>`_ (ASE).
 
     Copyright (C) 2023 Henry Ding
 
@@ -28,33 +27,37 @@ from ase import io as ase_io
 
 
 class StructureFactorArtist:
-    """Draws plots of the structure factor to a matplotlib.Axes object"""
+    """Draws plots of the structure factor
+
+    :param _axis: axes the structure factor plots are drawn to
+    :type _axis: :class:`matplotlib.axes.Axes`
+    """
 
     def __init__(self, axis):
+        """Constructor method"""
         self._axis = axis
 
     @property
     def axis(self):
-        """The matplotlib.Axes object used to draw plots"""
+        """Gets :attr:`~StructureFactorArtist._axis`"""
         return self._axis
 
     def draw_structure_factor(
         self, structure_factor, plane_vec1, plane_vec2, sample_shape
     ):
-        """Draws a color map of a structure factor for scattering vectors in a plane defined by 
-        plane_vec1, plane_vec2.
+        """Draws a color map of a structure factor.
 
-        Args:
-            structure_factor (StructureFactor): a StructureFactor object that contains system 
-            information on the scattering structure factor
-            plane_vec1 (3-item iterable): a vector in the reciprocal lattice basis 
-            (Miller indices) that defines the plane
-            plane_vec2 (3-item interable): a vector in the reciprocal lattice basis 
-            (Miller indices) that defines the plane
-            sample_shape (2-item interable): number of lines to sample along plane_vec1, plane_vec2
+        Scattering vector inputs are chosen in a plane defined by plane_vec1, plane_vec2.
 
-        Raises:
-            ValueError: Error if the structure_factor argument is not an instance of a 
+        :param structure_factor: a StructureFactor object that contains system
+        :type structure_factor: StructureFactor
+        :param plane_vec1: a vector in the reciprocal lattice basis
+        :type plane_vec1: tuple[float, float, float]
+        :param plane_vec2: a vector in the reciprocal lattice basis
+        :type plane_vec2: tuple[float, float, float]
+        :param sample_shape: number of lines to sample along plane_vec1, plane_vec2
+        :type sample_shape: int
+        :raises ValueError: if the structure_factor argument is not an instance of a
             StructureFactor subclass.
         """
         if not isinstance(structure_factor, StructureFactor):
@@ -65,14 +68,14 @@ class StructureFactorArtist:
         )
         num_points = sample_shape[0] * sample_shape[1]
         # get samples of the norm S of the structure factor in the plane
-        S_samples = [ # pylint: disable=invalid-name
+        S_samples = [  # pylint: disable=invalid-name
             structure_factor.get_sf_norm(
                 [plane_points[i, 0], plane_points[i, 1], plane_points[i, 2]]
             )
             for i in range(num_points)
         ]
         # reshape values for S in the shape of a grid with dimensions determined by sample_shape
-        S_grid = np.reshape(S_samples, sample_shape) # pylint: disable=invalid-name
+        S_grid = np.reshape(S_samples, sample_shape)  # pylint: disable=invalid-name
 
         # drawing to the matplotlib.Axes
         self._axis.imshow(S_grid, origin="lower", extent=[0, 1, 0, 1])
@@ -86,22 +89,25 @@ c_2\langle{plane_vec2[0]}, {plane_vec2[1]}, {plane_vec2[2]}\rangle$"
 
     @staticmethod
     def __sample_plane_points(vec1, vec2, sample_shape):
-        """Samples a N x 2 array of points on a plane defined by the vectors vec1, vec2. 
-        Each point is a linear combination c_1 * vec1 + c_2 * vec2 such that there are 
-        sample_shape[0], sample_shape[1] values of c_1, c_2 evenly distributed on [0, 1] interval.
+        """Constructs a uniform grid of points on a plane
 
-        Args:
-            vec1 (3-item iterable): a vector that defines the sample plane
-            vec2 (3-item iterable): another vector that defines the sample plane
-            sample_shape (2-item iterable): the number of samples for c_1, c_2
+        A set of points on a plane defined by the vectors vec1, vec2 are sampled. Each point is a
+        linear combination c_1 * vec1 + c_2 * vec2 such that there are sample_shape[0],
+        sample_shape[1] values of c_1, c_2 evenly distributed on [0, 1] interval.
 
-        Returns:
-            N x 2 numpy.ndarray: N x 2 array of points on the plane
+        :param vec1: a vector that defines the sample plane
+        :type vec1: tuple[float, float, float]
+        :param vec2: a vector that defines the sample plane
+        :type vec2: tuple[float, float, float]
+        :param sample_shape: the number of samples for c_1, c_2
+        :type sample_shape: tuple[int, int]
+        :return: array with shape (N,2) of points on the plane
+        :rtype: np.ndarray
         """
         # set of possible values for c1, c2
         c1_space = np.linspace(0, 1, sample_shape[0])
         c2_space = np.linspace(0, 1, sample_shape[1])
-        # generate N x 2 array of (c1, c2) tuples
+        # generate Nx2 array of (c1, c2) tuples
         v1_grid, v2_grid = np.meshgrid(c1_space, c2_space)
         point_coefficients = np.vstack([v1_grid.ravel(), v2_grid.ravel()]).T
         num_points = sample_shape[0] * sample_shape[1]
@@ -112,30 +118,34 @@ c_2\langle{plane_vec2[0]}, {plane_vec2[1]}, {plane_vec2[2]}\rangle$"
 
 
 class StructureFactor(ABC):
-    """Abstract base class for a the structure factor of a system. Implementations of 
-    StructureFactor will take into account considerations for different scattering techniques."""
+    """Abstract base class for the scattering structure factor of a system.
+
+    Subclasses of :class:`StructureFactor` implement different scattering techniques.
+    The convention of expressing reciprocal space vectors in the reciprocal lattice basis,
+    determinedined by the :class:`ase.Cell.reciprocal()` (fractional coordinates). This includes
+    scattering vectors.
+
+    :param name: the name of the system
+    :type name: str
+    :param atoms: information about atoms in the system unit cell
+    :type atoms: :class:`ase.Atoms`
+    """
 
     def __init__(self, name, atoms):
-        """Constructor for StructureFactor
-
-        Args:
-            name (str): identifier for the structure associated with this instance of 
-            StructureFactor atoms (ase.Atoms): contains crystallographical information 
-            about the structure
-        """
+        """Constructor method"""
         self.name = name
         self.atoms = atoms
 
     @classmethod
     def from_cif(cls, cif_path):
-        """Instantiates new StructureFactor object with data from the .cif or .mcif file. 
-        Implements a finite state machine to read file data.
+        """Instantiates :class:`StructureFactor` with data from the ``.cif`` or ``.mcif`` file.
 
-        Args:
-            cif_path (str): path to the .cif/.mcif file
+        A finite state machine is used to read file data.
 
-        Returns:
-            StructureFactor: StructureFactor object with data extracted from the .cif/.mcif file
+        :param cif_path: path to the .cif (.mcif) file
+        :type cif_path: str
+        :return: :class:`StructureFactor` instance with file data
+        :rtype: :class:`StructureFactor`
         """
         # read information from file into an ase.Atoms object
         atoms = ase_io.read(cif_path, format="cif")
@@ -219,37 +229,50 @@ class StructureFactor(ABC):
         atoms.set_cell(atoms.cell, scale_atoms=False)
         return cls(name, atoms)
 
-    def get_sf_norm(self, scattering_vector):
-        """Calculates the norm of the structure factor for a given scattering vector
+    def get_sf_norm(self, scattering_vector) -> float:
+        """Calculates norm of structure factor given a scattering vector
 
-        Args:
-            scattering_vector (iterable): scattering vector in the reciprocal lattice basis
+        .. note::
+            Implementations of :meth:`~StructureFactor.get_structure_factor()` that return vectors
+            must use a Cartesian basis for valid :meth:`~StructureFactor.get_sf_norm()`.
 
-        Returns:
-            float: norm of the structure factor
+        :param scattering_vector: reciprocal space scattering vector, in reciprocal lattice basis
+        :type scattering_vector: tuple[float, float, float]
+        :return: norm of the structure factor
+        :rtype: float
         """
-        return np.sum(np.square(np.abs(self.get_structure_factor(scattering_vector))))
+
+        return np.linalg.norm(self.get_structure_factor(scattering_vector))
 
     @abstractmethod
     def get_structure_factor(self, scattering_vector):
-        """Abstract method dfor calculating the structure factor"""
+        """Abstract method for calculating the structure factor
+
+        :param scattering_vector: reciprocal space scattering vector, in reciprocal lattice basis
+        :type scattering_vector: tuple[float, float, float]
+        """
 
     @abstractmethod
-    def get_form_factor(self, scattering_vector):
-        """Abstract method dfor calculating the scattering form factor"""
+    def get_form_factor(self, scattering_vector) -> float:
+        """Abstract method dfor calculating the scattering form factor
+
+        :param scattering_vector: reciprocal space scattering vector, in reciprocal lattice basis
+        :type scattering_vector: tuple[float, float, float]
+        :return: scattering form factor at the given scattering vector
+        :rtype: float
+        """
 
 
 class ElasticNeutronFactor(StructureFactor):
-    """Implementation of StructureFactor for the elastic neutron scattering structure factor
-    """
-    def get_structure_factor(self, scattering_vector):
-        """Calculates the structure factor for a given scattering vector
+    """Implements :class:`StructureFactor` for elastic neutron scattering"""
 
-        Args:
-            scattering_vector (iterable): scattering vector in the reciprocal lattice basis
+    def get_structure_factor(self, scattering_vector) -> tuple[float, float, float]:
+        """Calculates the elastic neutron scattering structure factor for a given scattering vector
 
-        Returns:
-            1x3 numpy.ndarray: complex-valued elastic neutron scattering structure factor vector
+        :param scattering_vector: reciprocal space scattering vector, in reciprocal lattice basis
+        :type scattering_vector: tuple[float, float, float]
+        :return: complex three-valued elastic neutron scattering structure factor
+        :rtype: tuple[float, float, float]
         """
         reciprocal_basis = 2 * np.pi * self.atoms.cell.reciprocal()
         structure_factors = []
@@ -258,20 +281,25 @@ class ElasticNeutronFactor(StructureFactor):
         ):
             pos = self.atoms.get_positions()[moment_index]
             exponent = 1j * sum(
-                [pos[i] * scattering_vector[i] * reciprocal_basis[i, i] for i in range(3)]
+                [
+                    pos[i] * scattering_vector[i] * reciprocal_basis[i, i]
+                    for i in range(3)
+                ]
             )
             structure_factors.append(np.exp(exponent) * moment)
 
-        return self.get_form_factor(scattering_vector) * np.sum(np.array(structure_factors), axis=0)
+        return tuple(
+            self.get_form_factor(scattering_vector)
+            * np.sum(np.array(structure_factors), axis=0)
+        )
 
     def get_form_factor(self, scattering_vector):
         """Calculates the neutron magnetic form factor for a given scattering vector
 
-        Args:
-            scattering_vector (iterable): scattering vector in the reciprocal lattice basis
-
-        Returns:
-            float: neutron magnetic form factor
+        :param scattering_vector: reciprocal space scattering vector, in reciprocal lattice basis
+        :type scattering_vector: tuple[float, float, float]
+        :return: neutron magnetic form factor
+        :rtype: float
         """
         # TODO: implement more complex form factor varieties
         return 1
