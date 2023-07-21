@@ -1,5 +1,4 @@
 # Defining the exact version will make sure things don't break
-sphinx
 numpy==1.25.1
 matplotlib==3.7.2
 ase==3.22.1
