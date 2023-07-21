@@ -82,9 +82,7 @@ class StructureFactorArtist:
         self._axis.set_xlabel(r"$c_1$")
         self._axis.set_ylabel(r"$c_2$")
         self._axis.set_title(
-            rf"$|\mathbf{{S}}(\mathbf{{Q}})|^2$ for $\mathbf{{Q}} = \
-c_1\langle{plane_vec1[0]}, {plane_vec1[1]}, {plane_vec1[2]}\rangle + \
-c_2\langle{plane_vec2[0]}, {plane_vec2[1]}, {plane_vec2[2]}\rangle$"
+            rf"$|\mathbf{{S}}(\mathbf{{Q}})|^2$ for $\mathbf{{Q}} = c_1\langle{plane_vec1[0]}, {plane_vec1[1]}, {plane_vec1[2]}\rangle + c_2\langle{plane_vec2[0]}, {plane_vec2[1]}, {plane_vec2[2]}\rangle$"
         )
 
     @staticmethod

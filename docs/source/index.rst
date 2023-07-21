@@ -6,12 +6,16 @@
 StructureFactorUtils: a Toolkit for Calculating Scattering Structure Factors
 ============================================================================
 
+This is the documentation for ``structure_factor_utils``, a Python package for calculating structure factors for scattering processes.
+
 Contents
 --------
 .. toctree::
+    :maxdepth: 4
 
-    getting_started
+    installation
     api
+    tutorials
 
 Indices and tables
 ==================
